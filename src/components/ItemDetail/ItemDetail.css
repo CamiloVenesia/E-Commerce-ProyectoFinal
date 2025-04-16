@@ -1,0 +1,27 @@
+.card-detail {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    box-shadow: 0 4px 8px 0 rgba(146, 137, 98, 0.3);
+    transition: 0.3s;
+    width: 40%;
+    border: solid 1px #777;
+    border-radius: 1rem;
+    width: 60vw;
+    height: 70vh;
+    margin: auto;
+    padding: 1rem;
+}
+
+.card-detail-btn{
+    padding: 1rem;
+    border-radius: 1rem;
+    border: none;
+    background-color: #777;
+    cursor: pointer;
+}
+
+.card-detail-btn:hover{
+    background-color: #ab956d;
+}
