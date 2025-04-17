@@ -1,4 +1,4 @@
-# E-commerce "La Matera" | Camilo
+# E-commerce "La Matera" | Camilo Monti Venesia
 
 Este proyecto consiste en una plataforma de compras en línea, diseñada con React, que busca proporcionar una experiencia de usuario intuitiva y eficiente. Con un enfoque en la facilidad de navegación y funcionalidad, "La Matera" permite a los usuarios explorar productos, añadirlos al carrito y completar el proceso de compra. Además, integra Firebase para la gestión de productos y el almacenamiento de órdenes, asegurando una experiencia robusta y ágil.
 
