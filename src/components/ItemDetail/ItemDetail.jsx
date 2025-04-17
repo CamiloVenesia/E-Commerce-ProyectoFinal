@@ -1,76 +1,138 @@
-// src/components/ItemDetail/ItemDetail.jsx
 import { Link, useParams } from 'react-router-dom';
 import './ItemDetail.css';
 import { useEffect, useState, useContext } from 'react';
-import { fetchData } from '../../fetchData';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 import Loader from '../Loader/Loader';
-import Contador from '../Contador/Contador';
 import { CartContext } from '../../context/CartContext';
+import { Minus, Plus, ShoppingCart } from 'react-feather';
 import Notification from '../Notification/Notification';
 
 function ItemDetail() {
-    const { id } = useParams();
-    const [detalle, setDetalle] = useState(null);
-    const [selectedCount, setSelectedCount] = useState(1);
-    const [showNotification, setShowNotification] = useState(false);
+  const { id } = useParams();
+  const [producto, setProducto] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [showNotification, setShowNotification] = useState(false);
 
-    const { addItem } = useContext(CartContext);
+  const { addItem } = useContext(CartContext);
 
-    const handleCountChange = (newCount) => {
-        setSelectedCount(newCount);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const docRef = doc(db, 'productos', id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setProducto({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setError('Producto no encontrado');
+        }
+      } catch (err) {
+        console.error('Error al cargar producto:', err);
+        setError('Error al cargar el producto');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    function agregarAlCarrito() {
-        addItem(detalle, selectedCount);
-        console.log("Producto agregado al carrito:", detalle.nombre, "Cantidad:", selectedCount);
-        setShowNotification(true); // Muestra la notificación
-    }
+    fetchProduct();
+  }, [id]);
 
-    useEffect(() => {
-        fetchData()
-        .then(response => {
-            const detalleDelProducto = response.find(el => el.id === parseInt(id));
-            setDetalle(detalleDelProducto);
-        })
-        .catch(err => console.error(err));
-    }, [id]);
+  const handleAddToCart = () => {
+    addItem(producto, quantity);
+    setShowNotification(true);
+  };
 
-    return (
-        !detalle ? <Loader />
-        :
-        <div className="card-detail">
-            <h2>{detalle.nombre || "NO DISPONIBLE"}</h2>
-            <h3>Precio: ${detalle.precio || "SIN PRECIO"}</h3>
-            <p>Descripción: {detalle.descripcion}</p>
-            {detalle.stock > 0 ? (
-                <p>Quedan {detalle.stock} unidades</p>
-            ) : (
-                <p>Producto agotado!</p>
-            )}
-            {detalle.oferta && <p><b>PRODUCTO EN OFERTA</b></p>}
+  if (loading) return <Loader />;
+  if (error) return <div className="error-message">{error}</div>;
+  if (!producto) return <div className="error-message">Producto no disponible</div>;
 
-            <Contador initial={1} stock={detalle.stock} onCountChange={handleCountChange} />
-
-            <button 
-            disabled={detalle.stock === 0} 
-            className="card-detail-btn" 
-            onClick={agregarAlCarrito}
-            >
-            Agregar al carrito
-            </button>
-            <Link to="/">
-            <button className="card-detail-btn">Volver al inicio</button>
-            </Link>
-
-            {/* Notificación: se muestra cuando showNotification es true */}
-            {showNotification && (
-            <Notification 
-                message="Producto agregado al carrito" 
-                onClose={() => setShowNotification(false)} 
-            />
-            )}
+  return (
+    <div className="product-detail-container">
+      <div className="product-detail-grid">
+        <div className="product-image-wrapper">
+          <img
+            src={producto.img || '/placeholder-product.jpg'}
+            alt={producto.nombre}
+            className="product-detail-image"
+          />
         </div>
-    );
+        <div className="product-info">
+          <h1 className="product-title">{producto.nombre}</h1>
+          <p className="product-price">
+            {typeof producto.precio === 'number'
+              ? `$${producto.precio.toFixed(2)}`
+              : 'Precio no disponible'}
+          </p>
+          <hr className="product-separator" />
+          <p className="product-description">{producto.descripcion}</p>
+          <hr className="product-separator" />
+
+          <div className="quantity-selector">
+            <button
+              className="quantity-button"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            >
+              <Minus size={16} />
+            </button>
+            <span className="quantity-value">{quantity}</span>
+            <button
+              className="quantity-button"
+              onClick={() => setQuantity(quantity + 1)}
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+
+          <button
+            className="add-to-cart-btn"
+            onClick={handleAddToCart}
+            disabled={producto.stock === 0}
+          >
+            <ShoppingCart size={16} />
+            Agregar al carrito
+          </button>
+
+          <Link to="/" className="back-to-home-link">
+            Volver al inicio
+          </Link>
+
+          <div className="product-details-section">
+            <h2 className="details-title">Detalles del producto</h2>
+            <div className="details-card">
+              <div className="details-content">
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <h3 className="detail-label">Material</h3>
+                    <p className="detail-value">{producto.material || 'No especificado'}</p>
+                  </div>
+                  <hr className="detail-separator" />
+                  <div className="detail-item">
+                    <h3 className="detail-label">Origen</h3>
+                    <p className="detail-value">{producto.origen || 'Argentina'}</p>
+                  </div>
+                  <hr className="detail-separator" />
+                  <div className="detail-item">
+                    <h3 className="detail-label">Capacidad</h3>
+                    <p className="detail-value">{producto.capacidad || 'No especificado'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showNotification && (
+        <Notification
+          message="Producto agregado al carrito"
+          onClose={() => setShowNotification(false)}
+        />
+      )}
+    </div>
+  );
 }
 
 export default ItemDetail;

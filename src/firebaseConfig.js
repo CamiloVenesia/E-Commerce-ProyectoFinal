@@ -1,14 +1,15 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore"
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBg1UDHAHrVnliu_GmKVYogkzhG9tADq1Q",
-    authDomain: "pf-react-monti-venesia-franco.firebaseapp.com",
-    projectId: "pf-react-monti-venesia-franco",
-    storageBucket: "pf-react-monti-venesia-franco.firebasestorage.app",
-    messagingSenderId: "1042310314815",
-    appId: "1:1042310314815:web:260487e976d11a75e6b18a"
+    apiKey: "AIzaSyCfEhXS6p4NC73Ge9yKOdzY2xOnx_8RK3o",
+    authDomain: "e-commerce-pf-lamatera.firebaseapp.com",
+    projectId: "e-commerce-pf-lamatera",
+    storageBucket: "e-commerce-pf-lamatera.firebasestorage.app",
+    messagingSenderId: "12349078561",
+    appId: "1:12349078561:web:35a4cbc2cb71c95ea87760"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore( app )
+export const db = getFirestore(app)

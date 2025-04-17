@@ -1,62 +1,79 @@
 import { useEffect, useState } from 'react';
-import { fetchData } from '../../fetchData';
 import Item from '../Item/Item';
 import Loader from '../Loader/Loader';
 import './ItemListContainer.css';
 import { useParams } from 'react-router-dom';
-import { productos } from '../../productos.js';
 import { db } from '../../firebaseConfig.js';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 function ItemListContainer() {
-    const [todosLosProductos, setTodosLosProductos] = useState([]);
     const [misProductos, setMisProductos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const { categoria } = useParams();
 
     useEffect(() => {
-        if (todosLosProductos.length === 0) {
-            fetchData().then(response => {
-                setTodosLosProductos(response);
+        const obtenerProductos = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const productosRef = collection(db, "productos");
+    
+                let consulta;
                 if (categoria) {
-                    const productosFiltrados = response.filter(el => el.categoria === categoria);
-                    setMisProductos(productosFiltrados);
-                    setLoading(false);
+                    consulta = query(
+                        productosRef,
+                        where("categoria", "==", categoria),
+                        orderBy("nombre")  // Orden alfabético
+                    );
                 } else {
-                    setMisProductos(response);
-                    setLoading(false);
-                };
-            })
-            .catch(err => console.error(err));
-        } else {
-            if (categoria) {
-                const productosFiltrados = todosLosProductos.filter(el => el.categoria === categoria);
-                setMisProductos(productosFiltrados);
-            } else {
-                setMisProductos(todosLosProductos);
-            };
-        }
-    }, [categoria, todosLosProductos]);
+                    consulta = query(productosRef, orderBy("nombre"));
+                }
+    
+                const querySnapshot = await getDocs(consulta);
+                const productosFirebase = querySnapshot.docs.map(doc => ({
+                    id: doc.id,  // Asegurando que el ID del documento esté incluido
+                    ...doc.data()
+                }));
+    
+                setMisProductos(productosFirebase);
+            } catch (error) {
+                console.error("Error al obtener productos:", error);
+                setError("Error al cargar los productos");
+            } finally {
+                setLoading(false);
+            }
+        };
+    
+        obtenerProductos();
+    }, [categoria]);
 
     return (
         <div className="products-container">
             <h1 className="products-title">{categoria ? categoria.toUpperCase() : 'NUESTROS PRODUCTOS'}</h1>
+            
+            {error && <p className="error-message">{error}</p>}
+            
             <div className="products-grid">
-                {loading ? <Loader /> :
-                misProductos.map(producto => (
-                    <Item 
-                        key={producto.id} 
-                        id={producto.id} 
-                        nombre={producto.nombre} 
-                        precio={producto.precio}
-                        descripcion={producto.descripcion} 
-                        img={producto.img}
-                        stock={producto.stock}
-                    />
-                ))}
+                {loading ? (
+                    <Loader />
+                ) : (
+                    misProductos.map(producto => (
+                        <Item 
+                            key={producto.id} 
+                            id={producto.id}
+                            nombre={producto.nombre} 
+                            precio={producto.precio}
+                            descripcion={producto.descripcion} 
+                            img={producto.img}
+                            stock={producto.stock}
+                            oferta={producto.oferta}  // Asegúrate de pasar esta prop
+                        />
+                    ))
+                )}
             </div>
         </div>
     );
-};
+}
 
 export default ItemListContainer;
